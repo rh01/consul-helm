@@ -244,6 +244,165 @@ EOF
 }
 
 #--------------------------------------------------------------------
+# metrics
+
+@test "connectInject/Deployment: adds default metrics flags with correct default values when global.metrics.enabled=true" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'global.metrics.enabled=true' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics-merging=false"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-merged-metrics-port=20100"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-port=20200"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-path=\"/metrics\""))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+@test "connectInject/Deployment: adds default metrics flags when metrics.defaultEnabled=true and global.metrics.enabled=false" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'connectInject.metrics.defaultEnabled=true' \
+      --set 'global.metrics.enabled=false' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics-merging=false"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-merged-metrics-port=20100"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-port=20200"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-path=\"/metrics\""))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+@test "connectInject/Deployment: does not add default metrics flags when metrics.defaultEnabled=false and global.metrics.enabled=true" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'global.metrics.enabled=true' \
+      --set 'connectInject.metrics.defaultEnabled=false' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics"))' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics-merging"))' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-merged-metrics-port"))' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-port"))' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-path"))' | tee /dev/stderr)
+  [ "${actual}" = "false" ]
+}
+
+@test "connectInject/Deployment: metrics.defaultEnableMerging can be configured when metrics.defaultEnabled=true" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'connectInject.metrics.defaultEnabled=true' \
+      --set 'connectInject.metrics.defaultEnableMerging=true' \
+      --set 'global.metrics.enabled=false' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics-merging=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+@test "connectInject/Deployment: metrics.defaultMergedMetricsPort can be configured when metrics.defaultEnabled=true" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'connectInject.metrics.defaultEnabled=true' \
+      --set 'connectInject.metrics.defaultMergedMetricsPort=12345' \
+      --set 'global.metrics.enabled=false' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-merged-metrics-port=12345"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+@test "connectInject/Deployment: metrics.defaultPrometheusScrapePort can be configured when metrics.defaultEnabled=true" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'connectInject.metrics.defaultEnabled=true' \
+      --set 'connectInject.metrics.defaultPrometheusScrapePort=12345' \
+      --set 'global.metrics.enabled=false' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-port=12345"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+@test "connectInject/Deployment: metrics.defaultPrometheusScrapePath can be configured when metrics.defaultEnabled=true" {
+  cd `chart_dir`
+  local cmd=$(helm template \
+      -s templates/connect-inject-deployment.yaml \
+      --set 'connectInject.enabled=true' \
+      --set 'connectInject.metrics.defaultEnabled=true' \
+      --set 'connectInject.metrics.defaultPrometheusScrapePath=/some-path' \
+      --set 'global.metrics.enabled=false' \
+      . | tee /dev/stderr |
+      yq '.spec.template.spec.containers[0].command' | tee /dev/stderr)
+
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-enable-metrics=true"))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+  local actual=$(echo "$cmd" |
+    yq 'any(contains("-default-prometheus-scrape-path=\"/some-path\""))' | tee /dev/stderr)
+  [ "${actual}" = "true" ]
+}
+
+#--------------------------------------------------------------------
 # consul and envoy images
 
 @test "connectInject/Deployment: container image is global default" {

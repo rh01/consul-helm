@@ -94,6 +94,13 @@ spec:
                 -health-checks-reconcile-period={{ .Values.connectInject.healthChecks.reconcilePeriod }} \
                 {{- end }}
                 -cleanup-controller-reconcile-period={{ .Values.connectInject.cleanupController.reconcilePeriod }} \
+                {{- if (or .Values.connectInject.metrics.defaultEnabled (and .Values.global.metrics.enabled (eq (.Values.connectInject.metrics.defaultEnabled | toString) "-"))) }}
+                -default-enable-metrics=true \
+                -default-enable-metrics-merging={{ .Values.connectInject.metrics.defaultEnableMerging }}  \
+                -default-merged-metrics-port={{ .Values.connectInject.metrics.defaultMergedMetricsPort }} \
+                -default-prometheus-scrape-port={{ .Values.connectInject.metrics.defaultPrometheusScrapePort }} \
+                -default-prometheus-scrape-path="{{ .Values.connectInject.metrics.defaultPrometheusScrapePath }}" \
+                {{- end }}
                 {{- if .Values.connectInject.envoyExtraArgs }}
                 -envoy-extra-args="{{ .Values.connectInject.envoyExtraArgs }}" \
                 {{- end }}

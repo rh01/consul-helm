@@ -1271,6 +1271,41 @@ connectInject:
     # reconcile is done after the initial reconcile at startup is completed.
     reconcilePeriod: "1m"
 
+  # Configures metrics for Consul Connect services. The values under
+  # connectInject.metrics configure defaults for all Connect services, and are
+  # overrideable via annotations on a per-Pod basis.
+  metrics:
+    # If true, this value will enable the connect-injector to automatically
+    # add prometheus annotations to connect-injected pods. It will also 
+    # add a listener on the Envoy sidecar to expose metrics. The exposed
+    # metrics will depend on whether metrics merging is enabled:
+    #   - If metrics merging is enabled:
+    #     the Consul sidecar will run a merged metrics server
+    #     combining Envoy sidecar and Connect service metrics. 
+    #   - If metrics merging is disabled:
+    #     the listener will just expose Envoy sidecar metrics.
+    # This will inherit from global.metrics.enabled.
+    defaultEnabled: “-”
+    # Configures the Consul sidecar to run a merged metrics server
+    # to combine and serve both Envoy and Connect service metrics if true.
+    # Only applicable if global.connectInject.metrics.defaultEnabled is 
+    # true.
+    defaultEnableMerging: false
+    # Configures the port at which the Consul sidecar will listen on to return
+    # combined metrics. Only applicable if
+    # global.connectInject.metrics.defaultEnabled is true.
+    defaultMergedMetricsPort: 20100
+    # Configures the port Prometheus will scrape metrics from, by configuring the Pod
+    # annotation prometheus.io/port and the corresponding listener in the Envoy
+    # sidecar. Only applicable if global.connectInject.metrics.defaultEnabled
+    # is true.
+    defaultPrometheusScrapePort: 20200
+    # Configures the path Prometheus will scrape metrics from, by configuring the pod
+    # annotation prometheus.io/path and the corresponding handler in the Envoy
+    # sidecar. Only applicable if global.connectInject.metrics.defaultEnabled
+    # is true.
+    defaultPrometheusScrapePath: "/metrics"
+
   # Cleanup controller cleans up Consul service instances that remain registered
   # despite their pods no longer running. This could happen if the pod's `preStop`
   # hook failed to execute for some reason.
